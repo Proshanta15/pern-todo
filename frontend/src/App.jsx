@@ -9,14 +9,21 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [editingTodo, setEditingTodo] = useState(null);
   const [editedText, setEditedText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const getTodos = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const res = await axios.get("http://localhost:5000/todos");
       setTodos(res.data);
       console.log(res.data);
     } catch (error) {
       console.log(error.message);
+      setError("Failed to fetch. Please try again leter.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,49 +33,80 @@ function App() {
 
   const onSubmitForm = async (e) => {
     e.preventDefault();
+    if (!description.trim()) return;
     try {
-      await axios.post("http://localhost:5000/todos", {
+      setError(null);
+      const res = await axios.post("http://localhost:5000/todos", {
         description,
         completed: false,
       });
+      setTodos([...todos, res.data]);
       setDescription("");
-      getTodos();
     } catch (error) {
       console.log(error.message);
+      setError("Failed to fetch. Please try again leter.");
     }
   };
 
   const saveEdit = async (id) => {
     try {
+      setError(null);
+
+      const currentTodo = todos.find((todo) => todo.todo_id === id);
+
+      const trimmedText = editedText.trim();
+
+      if (currentTodo.description === trimmedText) {
+        setEditingTodo(null);
+        setEditedText("");
+        return;
+      }
+
       await axios.put(`http://localhost:5000/todos/${id}`, {
         description: editedText,
       });
       setEditingTodo(null);
       setEditedText("");
-      getTodos();
+      setTodos(
+        todos.map((todo) =>
+          todo.todo_id === id
+            ? { ...todo, description: editedText, completed: false }
+            : todo,
+        ),
+      );
     } catch (error) {
       console.log(error.message);
+      setError("Failed to fetch. Please try again leter.");
     }
   };
 
   const deleteTodo = async (id) => {
     try {
+      setError(null);
       await axios.delete(`http://localhost:5000/todos/${id}`);
       setTodos(todos.filter((todo) => todo.todo_id !== id));
     } catch (error) {
       console.log(error.message);
+      setError("Failed to fetch. Please try again leter.");
     }
   };
 
   const toggleCompleted = async (id) => {
     try {
+      setError(null);
       const todo = todos.find((todo) => todo.todo_id === id);
       await axios.put(`http://localhost:5000/todos/${id}`, {
         description: todo.description,
         completed: !todo.completed,
       });
+      setTodos(
+        todos.map((todo) =>
+          todo.todo_id === id ? { ...todo, completed: !todo.completed } : todo,
+        ),
+      );
     } catch (error) {
       console.log(error.message);
+      setError("Failed to fetch. Please try again leter.");
     }
   };
 
@@ -79,6 +117,7 @@ function App() {
           <h1 className="text-4xl font-bold text-gray-800 mb-8">
             PERN TODO APP
           </h1>
+          {error && <div>{error}</div>}
           <form
             onSubmit={onSubmitForm}
             className="flex items-center gap-2 shadow-sm border p-2 rounded-lg mb-6"
@@ -97,7 +136,11 @@ function App() {
           </form>
 
           <div>
-            {todos.length === 0 ? (
+            {loading ? (
+              <div className="">
+                <p>Loading tasks...</p>
+              </div>
+            ) : todos.length === 0 ? (
               <p>No tasks available. Add a new task!</p>
             ) : (
               <div className="flex flex-col gap-y-4">
@@ -128,9 +171,10 @@ function App() {
                       </div>
                     ) : (
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 overflow-hidden">
                           <button
-                            className={`h-5 w-5 border rounded-full flex items-center justify-center ${todo.completed ? "bg-green-500  border-green-500 text-white" : "border-gray-300 hover:border-blue-400"}`}
+                            onClick={() => toggleCompleted(todo.todo_id)}
+                            className={`flex-shrink-0 h-5 w-5 border rounded-full flex items-center justify-center ${todo.completed ? "bg-green-500  border-green-500 text-white" : "border-gray-300 hover:border-blue-400"}`}
                           >
                             {todo.completed && <MdOutlineDone size={16} />}
                           </button>
