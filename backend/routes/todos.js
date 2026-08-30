@@ -39,7 +39,10 @@ router.put("/:id", async (req, res) => {
       "UPDATE todo SET description = $1, completed = $2 WHERE todo_id = $3 RETURNING *",
       [description, completed, id],
     );
-    res.json(updatedTodo.rows[0]);
+    res.json({
+      message: "Todo was updated",
+      todo: updatedTodo.rows[0],
+    });
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Server Error");
