@@ -114,7 +114,7 @@ function App() {
     <>
       <div className="min-h-screen bg-gray-800 flex justify-center items-center  p-4">
         <div className="bg-gray-50 rounded-2xl shadow-xl w-full max-w-lg p-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
             PERN TODO APP
           </h1>
           {error && <div>{error}</div>}
